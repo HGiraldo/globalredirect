@@ -1,6 +1,6 @@
 name = Global Redirect
-description = "Searches for an alias of the current URL and 301 redirects if found. Stops duplicate content arising when path module is enabled."
-package = Path management
+description = "Searches for an alias of the current URL and 301 redirects if found. Stops duplicate content arising when path module is enabled. MODIFIED (by SeeD)"
+package = SeeD Mods
 core = 7.x
 files[] = globalredirect.test
 configure = admin/config/system/globalredirect
