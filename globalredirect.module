@@ -368,19 +368,26 @@ function _globalredirect_get_settings($default_only = FALSE) {
 }
 
 /**
- * globalredirect_request_path() is borrowed from request_uri(), but it only ltrim's..
+ * globalredirect_request_path() is borrowed from request_path(),
+ * but it only ltrim's.
  */
 function globalredirect_request_path() {
-  if (request_uri()) {
-    if (isset($_REQUEST['q'])) {
-      $path = $_REQUEST['q'];
-    }
-    else {
-      // This is a request using a clean URL. Extract the path from REQUEST_URI.
-      $request_path = strtok(request_uri(), '?');
-      $base_path_len = drupal_strlen(rtrim(dirname($_SERVER['SCRIPT_NAME']), '\/'));
-      // Unescape and strip $base_path prefix, leaving q without a leading slash.
-      $path = drupal_substr(urldecode($request_path), $base_path_len + 1);
+  if (isset($_REQUEST['q']) && is_string($_REQUEST['q'])) {
+    $path = $_REQUEST['q'];
+  }
+  elseif (isset($_SERVER['REQUEST_URI'])) {
+    // This request is either a clean URL, or 'index.php', or nonsense.
+    // Extract the path from REQUEST_URI.
+    $request_path = strtok($_SERVER['REQUEST_URI'], '?');
+    $base_path_len = strlen(rtrim(dirname($_SERVER['SCRIPT_NAME']), '\/'));
+    // Unescape and strip $base_path prefix, leaving q without a leading slash.
+    $path = substr(urldecode($request_path), $base_path_len + 1);
+    // If the path equals the script filename, either because 'index.php' was
+    // explicitly provided in the URL, or because the server added it to
+    // $_SERVER['REQUEST_URI'] even when it wasn't provided in the URL (some
+    // versions of Microsoft IIS do this), the front page should be served.
+    if ($path == basename($_SERVER['PHP_SELF'])) {
+      $path = '';
     }
   }
   else {
