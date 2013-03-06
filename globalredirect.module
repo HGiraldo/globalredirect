@@ -127,6 +127,11 @@ function globalredirect_init() {
     }
   }
 
+  // If we have a prefix, we need to make sure the prefix end with a slash
+  if ($prefix) {
+    $prefix .= '/';
+  }
+
   // If Content Translation module is enabled then check the path is correct.
   if ($settings['language_redirect'] && module_exists('translation') && preg_match('/node\/([0-9]+)(\/.+|)$/', $current_path, $matches)) {
     switch (variable_get('locale_language_negotiation_url_part', LOCALE_LANGUAGE_NEGOTIATION_URL_PREFIX)) {
@@ -157,15 +162,17 @@ function globalredirect_init() {
       case LOCALE_LANGUAGE_NEGOTIATION_URL_DOMAIN:
         // Let's check is there other languages on site.
         $all_languages = language_list();
-        if (count($all_languages) > 1) {
+        $node = node_load($matches[1]);
+        if (isset($node->language) && $node->language != LANGUAGE_NONE && $node->language != $language->language && count($all_languages) > 1) {
           foreach ($all_languages as $l => $lang) {
             // Only test for languages other than the current one.
             if ($lang->language != $language->language) {
               $alias = drupal_get_path_alias($path, $lang->language);
-              // There is a matching language for this alias
-              if ($prefix . '/' . $alias != $current_path) {
+              // There is a matching language for this alias.
+              if ($prefix . $alias != $request_path) {
                 if (isset($lang->domain)) {
-                  drupal_goto($lang->domain . '/' . $alias, $options, 301);
+                  $options['language'] = $lang;
+                  globalredirect_goto($alias, $options);
                 }
                 break;
               }
@@ -179,11 +186,6 @@ function globalredirect_init() {
   // Find an alias (if any) for the request
   $langcode = isset($options['language']->language) ? $options['language']->language : NULL;
   $alias = drupal_get_path_alias($path, $langcode);
-
-  // If we have a prefix, we need to make sure the prefix end with a slash
-  if ($prefix) {
-    $prefix .= '/';
-  }
 
   // Alias case sensitivity check.
   // NOTE: This has changed. In D6 the $alias matched the request (in terms of
